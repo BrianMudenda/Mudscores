@@ -3,43 +3,55 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Mudscore · Exam tracker</title>
-  <!-- Link to your CSS file (we'll create it next) -->
-  <link rel="stylesheet" href="style.css">
+  <title>Mudscore · Exam Score Tracker</title>
+  <!-- Google Fonts for clean typography -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:opsz,wght@14..32,400;14..32,500;14..32,600;14..32,700&display=swap" rel="stylesheet">
   <!-- Supabase JavaScript client -->
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <!-- Custom styles -->
+  <link rel="stylesheet" href="style.css">
 </head>
 <body>
-  <div class="container">
-    <!-- App header -->
-    <h1 class="logo">📊 Mudscore</h1>
-    <p class="tagline">Your exam results, always with you.</p>
+  <div class="app-container">
+    <!-- Header -->
+    <header class="app-header">
+      <h1 class="logo">📊 Mudscore</h1>
+      <p class="tagline">Keep track of your exam achievements</p>
+    </header>
 
-    <!-- LOGIN / SIGNUP CARD (shown when not authenticated) -->
-    <div id="auth-section" class="card">
-      <h2>Login or Sign Up</h2>
+    <!-- Login / Sign Up Section -->
+    <section id="auth-section" class="auth-card">
+      <h2>Access Your Scores</h2>
       <form id="auth-form">
-        <input type="email" id="email" placeholder="Email address" required>
-        <input type="password" id="password" placeholder="Password" required>
+        <div class="form-group">
+          <label for="email">Email</label>
+          <input type="email" id="email" placeholder="your@email.com" required>
+        </div>
+        <div class="form-group">
+          <label for="password">Password</label>
+          <input type="password" id="password" placeholder="••••••••" required>
+        </div>
         <div class="button-group">
-          <button type="button" id="signin-btn" class="btn primary">Sign In</button>
-          <button type="button" id="signup-btn" class="btn secondary">Sign Up</button>
+          <button type="button" id="signin-btn" class="btn btn-primary">Sign In</button>
+          <button type="button" id="signup-btn" class="btn btn-secondary">Sign Up</button>
         </div>
       </form>
-    </div>
+    </section>
 
-    <!-- SCORES SECTION (hidden until logged in) -->
-    <div id="scores-section" class="card" style="display: none;">
-      <div class="scores-header">
+    <!-- Scores Dashboard (hidden until logged in) -->
+    <section id="scores-section" class="scores-dashboard" style="display: none;">
+      <div class="dashboard-header">
         <h2>My Exam Scores</h2>
-        <button id="add-score-btn" class="btn primary">+ Add new</button>
+        <button id="add-score-btn" class="btn btn-primary">+ Add New Score</button>
       </div>
 
       <!-- Table to display scores -->
-      <table id="scores-table">
+      <table class="scores-table">
         <thead>
           <tr>
-            <th>Exam</th>
+            <th>Exam Name</th>
             <th>Year</th>
             <th>Score</th>
             <th>Actions</th>
@@ -51,30 +63,39 @@
       </table>
 
       <!-- Logout button -->
-      <div class="logout-area">
-        <button id="logout-btn" class="btn logout">Logout</button>
+      <div class="logout-container">
+        <button id="logout-btn" class="btn btn-logout">Sign Out</button>
       </div>
-    </div>
+    </section>
 
-    <!-- Hidden form for adding/editing a score (popup style) -->
-    <div id="score-form-modal" class="modal" style="display: none;">
+    <!-- Modal for Adding/Editing a Score -->
+    <div id="score-modal" class="modal" style="display: none;">
       <div class="modal-content">
         <h3 id="modal-title">Add Exam Score</h3>
         <form id="score-form">
           <input type="hidden" id="score-id">
-          <input type="text" id="exam-name" placeholder="Exam name (e.g. G7 exam)" required>
-          <input type="number" id="exam-year" placeholder="Year" required>
-          <input type="text" id="exam-score" placeholder="Score (e.g. 822)" required>
+          <div class="form-group">
+            <label for="exam-name">Exam Name</label>
+            <input type="text" id="exam-name" placeholder="e.g. G7 Exam" required>
+          </div>
+          <div class="form-group">
+            <label for="exam-year">Year</label>
+            <input type="number" id="exam-year" placeholder="e.g. 2014" required>
+          </div>
+          <div class="form-group">
+            <label for="exam-score">Score</label>
+            <input type="text" id="exam-score" placeholder="e.g. 822" required>
+          </div>
           <div class="button-group">
-            <button type="submit" id="save-score-btn" class="btn primary">Save</button>
-            <button type="button" id="cancel-score-btn" class="btn secondary">Cancel</button>
+            <button type="submit" class="btn btn-primary">Save</button>
+            <button type="button" id="cancel-btn" class="btn btn-secondary">Cancel</button>
           </div>
         </form>
       </div>
     </div>
   </div>
 
-  <!-- Link to your JavaScript file (we'll create it next) -->
+  <!-- Main JavaScript -->
   <script src="app.js"></script>
 </body>
 </html>
