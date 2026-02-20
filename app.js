@@ -1,14 +1,14 @@
-// app.js - Handles authentication and database operations for Mudscore
+// app.js – Mudscore application logic
 
 // ==================== CONFIGURATION ====================
+// 🔴 REPLACE WITH YOUR SUPABASE PROJECT DETAILS
 const SUPABASE_URL = 'https://tyfycbnpnmssouzbcpjm.supabase.co';
 const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InR5ZnljYm5wbm1zc291emJjcGptIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzE1NzU5NDAsImV4cCI6MjA4NzE1MTk0MH0.d-WHRo1r6Mz_av7TOgvEAakmNzAVBQ8JsEdwRPBuv2o';
 
-// Correct way to initialize Supabase client
-const { createClient } = supabaseClient;
-const supabaseClient = createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+// Initialize Supabase client (correct way)
+const supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 
-// DOM elements
+// ==================== DOM ELEMENTS ====================
 const authSection = document.getElementById('auth-section');
 const scoresSection = document.getElementById('scores-section');
 const authForm = document.getElementById('auth-form');
@@ -19,90 +19,93 @@ const signUpBtn = document.getElementById('signup-btn');
 const logoutBtn = document.getElementById('logout-btn');
 const scoresList = document.getElementById('scores-list');
 const addScoreBtn = document.getElementById('add-score-btn');
-const scoreFormModal = document.getElementById('score-form-modal');
-const scoreForm = document.getElementById('score-form');
+const scoreModal = document.getElementById('score-modal');
 const modalTitle = document.getElementById('modal-title');
+const scoreForm = document.getElementById('score-form');
 const scoreIdInput = document.getElementById('score-id');
 const examNameInput = document.getElementById('exam-name');
 const examYearInput = document.getElementById('exam-year');
 const examScoreInput = document.getElementById('exam-score');
-const cancelScoreBtn = document.getElementById('cancel-score-btn');
+const cancelBtn = document.getElementById('cancel-btn');
+
+// ==================== UTILITY FUNCTIONS ====================
+function escapeHtml(text) {
+  const div = document.createElement('div');
+  div.textContent = text;
+  return div.innerHTML;
+}
+
+function showError(message) {
+  alert('Error: ' + message);
+}
 
 // ==================== AUTHENTICATION ====================
-
-// Check if user is already logged in on page load
 async function checkUser() {
-  const { data: { user } } = await supabaseClient.auth.getUser();
+  const { data: { user } } = await supabase.auth.getUser();
   if (user) {
-    // User is signed in
-    authSection.style.display = 'none';
-    scoresSection.style.display = 'block';
-    loadScores();           // Load scores from database
-    setupRealtimeSubscription(); // Listen for real-time changes
-  } else {
-    // No user
-    authSection.style.display = 'block';
-    scoresSection.style.display = 'none';
-  }
-}
-
-// Sign Up
-async function signUp(email, password) {
-  const { data, error } = await supabaseClient.auth.signUp({ email, password });
-  if (error) {
-    alert('Sign up error: ' + error.message);
-  } else {
-    alert('Check your email for confirmation! (If email confirmation is enabled)');
-  }
-}
-
-// Sign In
-async function signIn(email, password) {
-  const { data, error } = await supabaseClient.auth.signInWithPassword({ email, password });
-  if (error) {
-    alert('Login error: ' + error.message);
-  } else {
-    // Success – update UI
     authSection.style.display = 'none';
     scoresSection.style.display = 'block';
     loadScores();
-    setupRealtimeSubscription();
-  }
-}
-
-// Sign Out
-async function signOut() {
-  const { error } = await supabaseClient.auth.signOut();
-  if (error) {
-    alert('Logout error: ' + error.message);
+    setupRealtime();
   } else {
     authSection.style.display = 'block';
     scoresSection.style.display = 'none';
-    scoresList.innerHTML = ''; // Clear the table
   }
 }
 
-// ==================== SCORES (CRUD) ====================
+async function signUp(email, password) {
+  try {
+    const { data, error } = await supabase.auth.signUp({ email, password });
+    if (error) throw error;
+    alert('Sign-up successful! Check your email for confirmation (if enabled).');
+  } catch (err) {
+    showError(err.message);
+  }
+}
 
-// Load scores from Supabase
+async function signIn(email, password) {
+  try {
+    const { data, error } = await supabase.auth.signInWithPassword({ email, password });
+    if (error) throw error;
+    authSection.style.display = 'none';
+    scoresSection.style.display = 'block';
+    loadScores();
+    setupRealtime();
+  } catch (err) {
+    showError(err.message);
+  }
+}
+
+async function signOut() {
+  try {
+    const { error } = await supabase.auth.signOut();
+    if (error) throw error;
+    authSection.style.display = 'block';
+    scoresSection.style.display = 'none';
+    scoresList.innerHTML = '';
+  } catch (err) {
+    showError(err.message);
+  }
+}
+
+// ==================== SCORES CRUD ====================
 async function loadScores() {
-  const { data: scores, error } = await supabase
-    .from('scores')
-    .select('*')
-    .order('year', { ascending: false }); // Show newest first
+  try {
+    const { data: scores, error } = await supabase
+      .from('scores')
+      .select('*')
+      .order('year', { ascending: false });
 
-  if (error) {
-    console.error('Error loading scores:', error);
-    alert('Could not load scores.');
-  } else {
-    displayScores(scores);
+    if (error) throw error;
+    displayScores(scores || []);
+  } catch (err) {
+    showError('Failed to load scores: ' + err.message);
   }
 }
 
-// Display scores in the table
 function displayScores(scores) {
-  if (!scores || scores.length === 0) {
-    scoresList.innerHTML = '<tr><td colspan="4" style="text-align:center;">No scores yet. Click "Add new" to create one!</td></tr>';
+  if (scores.length === 0) {
+    scoresList.innerHTML = '<tr><td colspan="4" style="text-align: center; padding: 2rem;">No scores yet. Click "Add New Score" to get started.</td></tr>';
     return;
   }
 
@@ -123,150 +126,124 @@ function displayScores(scores) {
   scoresList.innerHTML = html;
 }
 
-// Helper to escape HTML (prevent XSS)
-function escapeHtml(text) {
-  if (!text) return '';
-  return String(text)
-    .replace(/&/g, '&amp;')
-    .replace(/</g, '&lt;')
-    .replace(/>/g, '&gt;')
-    .replace(/"/g, '&quot;')
-    .replace(/'/g, '&#039;');
-}
-
-// Open modal for adding a new score
+// Open modal for adding
 function openAddModal() {
   modalTitle.textContent = 'Add Exam Score';
-  scoreIdInput.value = '';          // Clear hidden ID
+  scoreIdInput.value = '';
   examNameInput.value = '';
   examYearInput.value = '';
   examScoreInput.value = '';
-  scoreFormModal.style.display = 'flex';
+  scoreModal.style.display = 'flex';
 }
 
-// Open modal for editing an existing score
+// Open modal for editing
 window.editScore = async function(id) {
-  // Fetch the score from Supabase (or we could use cached data, but fetch to be safe)
-  const { data, error } = await supabaseClient
-    .from('scores')
-    .select('*')
-    .eq('id', id)
-    .single();
-
-  if (error || !data) {
-    alert('Error fetching score: ' + error?.message);
-    return;
+  try {
+    const { data, error } = await supabase
+      .from('scores')
+      .select('*')
+      .eq('id', id)
+      .single();
+    if (error) throw error;
+    
+    modalTitle.textContent = 'Edit Exam Score';
+    scoreIdInput.value = data.id;
+    examNameInput.value = data.exam_name;
+    examYearInput.value = data.year;
+    examScoreInput.value = data.score;
+    scoreModal.style.display = 'flex';
+  } catch (err) {
+    showError('Could not load score: ' + err.message);
   }
-
-  modalTitle.textContent = 'Edit Exam Score';
-  scoreIdInput.value = data.id;
-  examNameInput.value = data.exam_name;
-  examYearInput.value = data.year;
-  examScoreInput.value = data.score;
-  scoreFormModal.style.display = 'flex';
 };
 
-// Save score (insert or update)
+// Save (insert or update)
 async function saveScore(event) {
-  event.preventDefault(); // Prevent form from refreshing page
-
+  event.preventDefault();
+  
   const id = scoreIdInput.value;
   const exam_name = examNameInput.value.trim();
   const year = parseInt(examYearInput.value.trim(), 10);
   const score = examScoreInput.value.trim();
 
   if (!exam_name || !year || !score) {
-    alert('Please fill in all fields');
+    showError('Please fill in all fields.');
     return;
   }
 
-  const { data: { user } } = await supabaseClient.auth.getUser();
-  if (!user) {
-    alert('You must be logged in.');
-    return;
-  }
+  try {
+    const { data: { user } } = await supabase.auth.getUser();
+    if (!user) throw new Error('Not authenticated');
 
-  let error;
-  if (id) {
-    // Update existing score
-    const { error: updateError } = await supabaseClient
-      .from('scores')
-      .update({ exam_name, year, score })
-      .eq('id', id);
-    error = updateError;
-  } else {
-    // Insert new score
-    const { error: insertError } = await supabaseClient
-      .from('scores')
-      .insert([{ user_id: user.id, exam_name, year, score }]);
-    error = insertError;
-  }
+    let result;
+    if (id) {
+      // Update
+      result = await supabase
+        .from('scores')
+        .update({ exam_name, year, score })
+        .eq('id', id);
+    } else {
+      // Insert
+      result = await supabase
+        .from('scores')
+        .insert([{ user_id: user.id, exam_name, year, score }]);
+    }
 
-  if (error) {
-    alert('Error saving score: ' + error.message);
-  } else {
-    // Close modal and refresh list (real-time will also update, but we refresh to be safe)
-    scoreFormModal.style.display = 'none';
-    loadScores(); // Refresh list
+    if (result.error) throw result.error;
+    
+    closeModal();
+    loadScores(); // refresh
+  } catch (err) {
+    showError('Save failed: ' + err.message);
   }
 }
 
-// Delete score
+// Delete
 window.deleteScore = async function(id) {
   if (!confirm('Are you sure you want to delete this score?')) return;
-
-  const { error } = await supabaseClient
-    .from('scores')
-    .delete()
-    .eq('id', id);
-
-  if (error) {
-    alert('Error deleting score: ' + error.message);
-  } else {
-    loadScores(); // Refresh list
+  
+  try {
+    const { error } = await supabase
+      .from('scores')
+      .delete()
+      .eq('id', id);
+    if (error) throw error;
+    loadScores();
+  } catch (err) {
+    showError('Delete failed: ' + err.message);
   }
 };
 
 // Close modal
 function closeModal() {
-  scoreFormModal.style.display = 'none';
+  scoreModal.style.display = 'none';
 }
 
 // ==================== REAL-TIME UPDATES ====================
-
-// Listen for changes in the scores table and update the UI automatically
-function setupRealtimeSubscription() {
+function setupRealtime() {
   supabase
     .channel('scores-changes')
     .on('postgres_changes', 
-        { event: '*', schema: 'public', table: 'scores' }, 
-        (payload) => {
-          console.log('Change received!', payload);
-          loadScores(); // Reload scores when any change happens
+        { event: '*', schema: 'public', table: 'scores' },
+        () => {
+          loadScores(); // reload on any change
         })
     .subscribe();
 }
 
 // ==================== EVENT LISTENERS ====================
+signInBtn.addEventListener('click', () => {
+  const email = emailInput.value.trim();
+  const password = passwordInput.value.trim();
+  if (email && password) signIn(email, password);
+  else showError('Please enter email and password.');
+});
 
 signUpBtn.addEventListener('click', () => {
   const email = emailInput.value.trim();
   const password = passwordInput.value.trim();
-  if (email && password) {
-    signUp(email, password);
-  } else {
-    alert('Please enter email and password.');
-  }
-});
-
-signInBtn.addEventListener('click', () => {
-  const email = emailInput.value.trim();
-  const password = passwordInput.value.trim();
-  if (email && password) {
-    signIn(email, password);
-  } else {
-    alert('Please enter email and password.');
-  }
+  if (email && password) signUp(email, password);
+  else showError('Please enter email and password.');
 });
 
 logoutBtn.addEventListener('click', signOut);
@@ -275,14 +252,11 @@ addScoreBtn.addEventListener('click', openAddModal);
 
 scoreForm.addEventListener('submit', saveScore);
 
-cancelScoreBtn.addEventListener('click', closeModal);
+cancelBtn.addEventListener('click', closeModal);
 
-// Close modal if user clicks outside of it
-window.addEventListener('click', (event) => {
-  if (event.target === scoreFormModal) {
-    closeModal();
-  }
+window.addEventListener('click', (e) => {
+  if (e.target === scoreModal) closeModal();
 });
 
-// Check user session when page loads
+// Initialize
 checkUser();
