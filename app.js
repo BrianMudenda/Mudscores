@@ -1,12 +1,12 @@
 // app.js - Handles authentication and database operations for Mudscore
 
 // ==================== CONFIGURATION ====================
-// 🔴 REPLACE THESE WITH YOUR SUPABASE PROJECT DETAILS 🔴
-const SUPABASE_URL = 'https://tyfycbnpnmssouzbcpjm.supabase.co';   // Your Project URL
-const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InR5ZnljYm5wbm1zc291emJjcGptIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzE1NzU5NDAsImV4cCI6MjA4NzE1MTk0MH0.d-WHRo1r6Mz_av7TOgvEAakmNzAVBQ8JsEdwRPBuv2o';                     // Your anon public key
+const SUPABASE_URL = 'https://tyfycbnpnmssouzbcpjm.supabase.co';
+const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InR5ZnljYm5wbm1zc291emJjcGptIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzE1NzU5NDAsImV4cCI6MjA4NzE1MTk0MH0.d-WHRo1r6Mz_av7TOgvEAakmNzAVBQ8JsEdwRPBuv2o';
 
-// Initialize Supabase client
-const supabase = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+// Correct way to initialize Supabase client
+const { createClient } = supabaseClient;
+const supabaseClient = createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 
 // DOM elements
 const authSection = document.getElementById('auth-section');
@@ -32,7 +32,7 @@ const cancelScoreBtn = document.getElementById('cancel-score-btn');
 
 // Check if user is already logged in on page load
 async function checkUser() {
-  const { data: { user } } = await supabase.auth.getUser();
+  const { data: { user } } = await supabaseClient.auth.getUser();
   if (user) {
     // User is signed in
     authSection.style.display = 'none';
@@ -48,7 +48,7 @@ async function checkUser() {
 
 // Sign Up
 async function signUp(email, password) {
-  const { data, error } = await supabase.auth.signUp({ email, password });
+  const { data, error } = await supabaseClient.auth.signUp({ email, password });
   if (error) {
     alert('Sign up error: ' + error.message);
   } else {
@@ -58,7 +58,7 @@ async function signUp(email, password) {
 
 // Sign In
 async function signIn(email, password) {
-  const { data, error } = await supabase.auth.signInWithPassword({ email, password });
+  const { data, error } = await supabaseClient.auth.signInWithPassword({ email, password });
   if (error) {
     alert('Login error: ' + error.message);
   } else {
@@ -72,7 +72,7 @@ async function signIn(email, password) {
 
 // Sign Out
 async function signOut() {
-  const { error } = await supabase.auth.signOut();
+  const { error } = await supabaseClient.auth.signOut();
   if (error) {
     alert('Logout error: ' + error.message);
   } else {
@@ -147,7 +147,7 @@ function openAddModal() {
 // Open modal for editing an existing score
 window.editScore = async function(id) {
   // Fetch the score from Supabase (or we could use cached data, but fetch to be safe)
-  const { data, error } = await supabase
+  const { data, error } = await supabaseClient
     .from('scores')
     .select('*')
     .eq('id', id)
@@ -180,7 +180,7 @@ async function saveScore(event) {
     return;
   }
 
-  const { data: { user } } = await supabase.auth.getUser();
+  const { data: { user } } = await supabaseClient.auth.getUser();
   if (!user) {
     alert('You must be logged in.');
     return;
@@ -189,14 +189,14 @@ async function saveScore(event) {
   let error;
   if (id) {
     // Update existing score
-    const { error: updateError } = await supabase
+    const { error: updateError } = await supabaseClient
       .from('scores')
       .update({ exam_name, year, score })
       .eq('id', id);
     error = updateError;
   } else {
     // Insert new score
-    const { error: insertError } = await supabase
+    const { error: insertError } = await supabaseClient
       .from('scores')
       .insert([{ user_id: user.id, exam_name, year, score }]);
     error = insertError;
@@ -215,7 +215,7 @@ async function saveScore(event) {
 window.deleteScore = async function(id) {
   if (!confirm('Are you sure you want to delete this score?')) return;
 
-  const { error } = await supabase
+  const { error } = await supabaseClient
     .from('scores')
     .delete()
     .eq('id', id);
