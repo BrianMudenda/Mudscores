@@ -1,0 +1,80 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Mudscore · Exam tracker</title>
+  <!-- Link to your CSS file (we'll create it next) -->
+  <link rel="stylesheet" href="style.css">
+  <!-- Supabase JavaScript client -->
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+</head>
+<body>
+  <div class="container">
+    <!-- App header -->
+    <h1 class="logo">📊 Mudscore</h1>
+    <p class="tagline">Your exam results, always with you.</p>
+
+    <!-- LOGIN / SIGNUP CARD (shown when not authenticated) -->
+    <div id="auth-section" class="card">
+      <h2>Login or Sign Up</h2>
+      <form id="auth-form">
+        <input type="email" id="email" placeholder="Email address" required>
+        <input type="password" id="password" placeholder="Password" required>
+        <div class="button-group">
+          <button type="button" id="signin-btn" class="btn primary">Sign In</button>
+          <button type="button" id="signup-btn" class="btn secondary">Sign Up</button>
+        </div>
+      </form>
+    </div>
+
+    <!-- SCORES SECTION (hidden until logged in) -->
+    <div id="scores-section" class="card" style="display: none;">
+      <div class="scores-header">
+        <h2>My Exam Scores</h2>
+        <button id="add-score-btn" class="btn primary">+ Add new</button>
+      </div>
+
+      <!-- Table to display scores -->
+      <table id="scores-table">
+        <thead>
+          <tr>
+            <th>Exam</th>
+            <th>Year</th>
+            <th>Score</th>
+            <th>Actions</th>
+          </tr>
+        </thead>
+        <tbody id="scores-list">
+          <!-- Scores will be inserted here by JavaScript -->
+        </tbody>
+      </table>
+
+      <!-- Logout button -->
+      <div class="logout-area">
+        <button id="logout-btn" class="btn logout">Logout</button>
+      </div>
+    </div>
+
+    <!-- Hidden form for adding/editing a score (popup style) -->
+    <div id="score-form-modal" class="modal" style="display: none;">
+      <div class="modal-content">
+        <h3 id="modal-title">Add Exam Score</h3>
+        <form id="score-form">
+          <input type="hidden" id="score-id">
+          <input type="text" id="exam-name" placeholder="Exam name (e.g. G7 exam)" required>
+          <input type="number" id="exam-year" placeholder="Year" required>
+          <input type="text" id="exam-score" placeholder="Score (e.g. 822)" required>
+          <div class="button-group">
+            <button type="submit" id="save-score-btn" class="btn primary">Save</button>
+            <button type="button" id="cancel-score-btn" class="btn secondary">Cancel</button>
+          </div>
+        </form>
+      </div>
+    </div>
+  </div>
+
+  <!-- Link to your JavaScript file (we'll create it next) -->
+  <script src="app.js"></script>
+</body>
+</html>
